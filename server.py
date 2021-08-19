@@ -14,7 +14,7 @@ broker_channel.queue_declare('control')
 print('OK')
 
 async def get_broker_message():
-    return broker_channel.queue_declare(queue='control')
+    return broker_channel.consume(queue='control')
 
 async def websocket_server(websocket, path):
     while True:
