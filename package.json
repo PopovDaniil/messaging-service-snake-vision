@@ -1,0 +1,15 @@
+{
+  "name": "messaging-service-snake-vision",
+  "version": "1.0.0",
+  "main": "server.js",
+  "type": "module",
+  "repository": "https://github.com/PopovDaniil/messaging-service-snake-vision.git",
+  "author": "Daniil <pde-rnd>",
+  "license": "MIT",
+  "dependencies": {
+    "amqp": "^0.2.7"
+  },
+  "devDependencies": {
+    "@types/amqp": "^0.2.5"
+  }
+}

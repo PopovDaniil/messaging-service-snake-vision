@@ -7,28 +7,35 @@ import asyncio
 import pika
 import websockets
 
-print('Starting RabbitMQ client...', end='', flush=True)
-broker_connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-broker_channel = broker_connection.channel()
-broker_channel.queue_declare('control')
-print('OK')
 
-async def get_broker_message():
-    return broker_channel.basic_get(queue='control')
-
-async def websocket_server(websocket, path):
+async def rabbitmq_client():
+    print('Starting RabbitMQ client...', end='', flush=True)
+    broker_connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+    broker_channel = broker_connection.channel()
+    broker_channel.queue_declare('control')
+    print('OK')
+    
     while True:
-        message = (await get_broker_message())[2]
+        mes = broker_channel.basic_get(queue='control', auto_ack=True)
+        if mes[2]:
+            print(mes)
 
-        if message: 
-            print(f'[RabbitMQ] - Received: {message}')   
-            await websocket.send(message)
-            print(f"[WebSocket] - Sent: {message}")
+async def websocket_server():
+    async def on_receive(websocket, path):
+        while True:
+            message = (await rabbitmq_client())[2]
 
+            if message: 
+                print(f'[RabbitMQ] - Received: {message}')   
+                await websocket.send(message)
+                print(f"[WebSocket] - Sent: {message}")
 
-print('Starting WebSocket server...', end='', flush=True)
-start_server = websockets.serve(websocket_server, "localhost", 8765)
-print('OK')
+    print('Starting WebSocket server...', end='', flush=True)
+    websockets.serve(on_receive, "localhost", 8765)
+    print('OK')
 
-asyncio.get_event_loop().run_until_complete(start_server)
-asyncio.get_event_loop().run_forever()
+async def main():
+    await asyncio.to_thread(rabbitmq_client)
+    await asyncio.to_thread(websocket_server)
+
+asyncio.run(main())
